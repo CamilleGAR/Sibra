@@ -36,10 +36,11 @@ On possède deux documents textes, correspondant chacun aux horaires d’une lig
 -	Dans chacune des deux premières listes d’arrêts, on va créer les arcs entre les arrêts qui formeront le graphe. (Pour cela on met en relation les horaires d’un arrêt et de celui d’après pour la liste des horaires à l’allez, et d’un arrêt et celui d’avant pour la liste des horaires au retour).
 
 -	On rassemble les arcs des deux listes dans la liste générale en faisant attention à bien les disposer sur les bons arrêts. Notre graphe est alors formé. 
-
 Détail : On remarque dans le code qu’on n’a pas pu copier les arrêts de chaque liste dans la liste générale car dans les deux listes, un même arrêt est désigné par un objet différent. On recrée donc chaque arrêt mais on n’y entre pas ses horaires. Nous n’en avons pas besoin car nous récupérons les arcs qui forment le graphe juste après.
-
 De même pours les arcs, on les copie mais on prend soin de changer leur destination par le nouvel objet (c’est-à-dire un arrêt de type Arret) correspondant.
 -	Maintenant que le graphe est fait, on le parcourt de manière récursive. Pour éviter les boucles, on a une liste qui contient tous les arrêts par lesquels on a déjà essayé de passer (à ce niveau de récursivité ou même plusieurs déplacements auparavant). Cela fonctionne car les arc sont triés par ordre croissant de leurs horaires, donc inutile d’essayer un chemin si on l’a déjà essayé à une heure plus tôt). 
+
+
+
 
 
