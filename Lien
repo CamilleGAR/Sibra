@@ -1,0 +1,30 @@
+import java.util.ArrayList;
+
+public class Lien { //represente les arcs. les liens de classe Lien sont stockes dans une liste dans des arrets de classe Arret
+	private Arret arretSuivant; //vers quel arret pointe l'arc
+	private double horaireDepart; //a quelle heure part l'arc
+	private double horaireArrivee; //a quelle heure arrive l'arc
+	
+	public Lien(Arret unArretSuivant, double unDepart, double uneArrivee){
+		arretSuivant = unArretSuivant;
+		horaireDepart = unDepart;
+		horaireArrivee = uneArrivee;
+	}
+	
+	public Arret getArretSuivant(){
+		return arretSuivant;
+	}
+	
+	public double getDepart() {
+		return horaireDepart;
+	}
+	
+	public void setArretSuivant(Arret arretSuiv) {
+		arretSuivant = arretSuiv;
+	}
+	
+	public double getArrivee() {
+		return horaireArrivee;
+	}
+}
+
