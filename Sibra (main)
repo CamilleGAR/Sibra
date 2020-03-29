@@ -1,0 +1,116 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class Sibra { //Classe main
+
+	public static void main(String[] args) {
+		
+		//recuperation des arrets + horaires du premier fichier
+		LireFichierTexte lecture = new LireFichierTexte("C:/Users/camil/Desktop/ProjetsJava/Sibra/1_Poisy-ParcDesGlaisins.txt"); //Adresse du premier fichier texte
+		ArrayList<Arret> listeArret = lecture.recupererArrets();  //Recupere toutes les informations du fichier texte (arrets, horaires, liens entre les arrets)
+		
+		//recuperation des arrets + horaires du deuxieme fichier
+		LireFichierTexte lecture2 = new LireFichierTexte("C:/Users/camil/Desktop/ProjetsJava/Sibra/2_Piscine-Patinoire_Campus.txt"); //Adresse du deuxieme fichier texte
+		ArrayList<Arret> listeArret2 = lecture2.recupererArrets(); //Recupere toutes les informations du fichier texte (arrets, horaires, liens entre les arrets)
+		
+		
+		//Concatenation, on rassemble les arrets des deux listes dans une meme nouvelle liste
+		ArrayList<Arret> listeConcat =  new ArrayList<Arret>(); //listeConcat est la liste sur laquelle on va vouloir travailler plus tard.
+		for (Arret a : listeArret) { //On lui ajoute tous les arrets des deux liste de depart.
+			boolean existe = false;
+			for (Arret aConcat : listeConcat) {
+				if (a.getNom().equals(aConcat.getNom())) existe = true;
+			}
+			if (existe == false) { //On fait attention a ne pas ajouter d'arret en double (dans le cas par exemple ou un arret est present dans les deux listes de depart).
+				Arret newArret = new Arret(a.getNom()); //On cree une copie de l'arret en en creant un nouveau avec le meme nom. Les horaires recuperes sur le deux listes precedemment n'ont pas besoin d'etre copies.
+				listeConcat.add(newArret);
+			}
+			existe = false;
+		}
+		//exactement la meme chose pour la deuxieme liste : on l'ajoute a la listeConcat.
+		for (Arret a2 : listeArret2) {
+			boolean existe = false;
+			for (Arret aConcat : listeConcat) {
+				if (a2.getNom().equals(aConcat.getNom())) existe = true;
+			}
+			if (existe == false) {
+				Arret newArret = new Arret(a2.getNom());
+				listeConcat.add(newArret);
+			}
+			existe = false;
+		}
+		
+		//Creation des liens entre les arrets pour les deux listes.
+		for(int i = 0; i < listeArret.size()-1; i++) {
+			listeArret.get(i).addLienAllez(listeArret.get(i+1)); //On cree les arcs orientes a l'allez
+			listeArret.get(listeArret.size()-i-1).addLienRetour(listeArret.get(listeArret.size()-i-2)); //On cree les arcs orientes au retour
+		}
+		
+		//exactement pareil pour la deuxieme liste
+		for(int i = 0; i < listeArret2.size()-1; i++) {
+			listeArret2.get(i).addLienAllez(listeArret2.get(i+1));
+			listeArret2.get(listeArret2.size()-i-1).addLienRetour(listeArret2.get(listeArret2.size()-i-2));
+		}
+		
+		//On reuni les arcs (classe Lien) des deux listes dans la listeConcat
+		//On a au final la liste de tous les arrets (de type Arret). Chaque arret contient une liste d'arcs qui l'emmenent aux arrets suivants.
+		for (Arret a : listeArret) {
+			for (Arret aConcat : listeConcat) {
+				if(a.getNom().equals(aConcat.getNom())) aConcat.addLiens(a.getListeLiens());	
+			}
+		}
+		//pareil pour la deuxieme liste
+		for (Arret a2 : listeArret2) {
+			for (Arret aConcat : listeConcat) {
+				if(a2.getNom().equals(aConcat.getNom())) aConcat.addLiens(a2.getListeLiens());	
+			}
+		}
+		
+		//On change les liens pour qu'ils redirigent vers le bon objet Arret.
+		//On a au dessus ajoute les arcs (classe Lien) appartenant a deux listes differentes. Ils ne pointent pas vers les memes objets. (meme arret reel mais pas la meme entitee informatique).
+		for (Arret aConcat : listeConcat) {
+			for (Lien l : aConcat.getLiens()) {
+				for (Arret aSuiv : listeConcat) {
+					if (l.getArretSuivant().getNom().equals(aSuiv.getNom())) l.setArretSuivant(aSuiv); //On remplace donc l'arret vers lequel pointe l'arc par celui qui existe bel et bien dans la listeConcat (il suffit de verifier que les noms soient les memes).
+				}
+			}
+		}
+		
+		
+		//Debut de la partie utilisateur.
+		Scanner myObj = new Scanner(System.in);  // Create a Scanner object
+		System.out.println("Liste des arrets et leur numero correspondant :\n");
+		for(int i = 0; i < listeConcat.size(); i++) {
+			System.out.println(i + " " + listeConcat.get(i).getNom());
+		}
+		System.out.println("\nEnter depart");
+		String dep = myObj.nextLine();  // recupere l'input
+		
+		System.out.println("\nEnter arrivee");
+		String arr = myObj.nextLine();  // recupere l'input
+		
+		System.out.println("\nEnter heure de depart. Format xx:xx ou x:xx");
+		String heure = myObj.nextLine();  // recupere l'input
+		
+		myObj.close();
+		
+		//On a recupere les demandes de l'utilsateur. On peut donc demander au programme d'aller de l'arret a a l'arret b avec la fonction allerA() de la classe Arret.
+		ArrayList<String> listePassage = new ArrayList<String>(); //Dit si on est deja passe par cet arret
+		listePassage.add(listeConcat.get(Integer.parseInt(dep)).getNom()); //on l'initialise avec le premier arret
+		Time resultat = listeConcat.get(Integer.parseInt(dep)).allerA(listeConcat.get(Integer.parseInt(arr)), listeConcat.get(0).conversion(heure), listePassage); //On calcule le chemin le plus rapide
+		for(int i = 0; i < resultat.getSuiteArrets().size()-1; i++) { //Boucle pour afficher proprement toutes les etapes
+			System.out.println(resultat.getSuiteArrets().get(i) + " Depart : " + contreConversion(resultat.getHeuresDeparts().get(i)) + " Arrivee : " + contreConversion(resultat.getHeuresArrivees().get(i)));
+		}
+		double heureArrivee = resultat.getHeure(); 
+		System.out.println(listeConcat.get(Integer.parseInt(arr)).getNom() + " " + contreConversion(heureArrivee)); //Affichage du dernier arret (on le separe de la boucle pour eviter un out of range sur les horaires de trajets vu qu'il n'y en a pas sur cet arret).
+		
+		
+	}
+	
+	public static String contreConversion(double nombre) { //On fait la conversion inverse, de minutes a chaine de caractere. ex : (430 -> "7:10"). Utile juste pour l'affichage, pour etre lisible par l'utilisateur.
+		if (nombre%60 >= 10) return Integer.toString(((int) nombre/60)) +":"+Integer.toString(((int) nombre%60));
+		else return Integer.toString(((int) nombre/60)) +":0"+Integer.toString(((int) nombre%60));
+	}
+}
+
+
