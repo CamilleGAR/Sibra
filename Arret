@@ -1,0 +1,149 @@
+import java.util.ArrayList;
+import java.util.Collections;
+
+public class Arret { //Represente un arret de bus avec
+	private String nom; //un nom
+	private ArrayList<Lien> listeLiens = new ArrayList<Lien>(); //une liste d'arc (de classe Lien, avec l'heure de depart, d'arrivee, et la destination)
+	private ArrayList<Double> listeHoraireAllez = new ArrayList<Double>(); //liste d'horaire a l'allez (utilisee uniquement pour la creation de la listeLiens, -voir main-)
+	private ArrayList<Double> listeHoraireRetour = new ArrayList<Double>(); //liste d'horaire au retour (pareil)
+	public Arret(String unNom){
+		nom = unNom;
+	}
+	//Certaines fonctions sont explicites (getters, setters, etc..)
+	public String getNom(){
+		return nom;
+	}
+	
+	public ArrayList<Double> getListeHorairesAllez(){
+		return listeHoraireAllez;
+	}
+	
+	public ArrayList<Double> getListeHorairesRetour(){
+		return listeHoraireRetour;
+	}
+	
+	public ArrayList<Lien> getLiens(){
+		return listeLiens;
+	}
+	
+	public ArrayList<Lien> getListeLiens(){
+		return listeLiens;
+	}
+	
+	public void addAscii(int i) { //forme le nom de l'arret a partir du code ascii de chaque caractere donne au fur et a mesure
+		nom += (char)i;
+	}
+	
+	public void addHoraireAllez(double d) {
+		listeHoraireAllez.add(d);
+	}
+	
+	public void addHoraireRetour(double d) {
+		listeHoraireRetour.add(d);
+	}
+	
+	public double minHeureAllez(Arret arret2, double heure) { //Sert a renvoyer le premier horaire apres "heure" dans l'arret suivant. On cree comme ca les arcs.
+		for (Double heure2 : arret2.getListeHorairesAllez()) {
+			if(heure < heure2) {
+				return heure2;
+			}
+		}
+		return  900000.0; //Si il n'y en a pas (fin de journee), on renvoie une valeur absurde, comme ca elle ne pourra pas etre choisie dans le parcours du graphe car consideree comme trop longue.
+	}
+	
+	public double minHeureRetour(Arret arret2, double heure) {  //Meme chose mais dans le sens retour.
+		for (Double heure2 : arret2.getListeHorairesRetour()) {
+			if(heure < heure2) return heure;
+		}
+		return (double) 900000;
+	}
+	
+	public void addLienAllez(Arret arret2) { //cree les arcs correspondants au trajet a l'allez
+		for (Double heure : listeHoraireAllez) {
+			Lien l = new Lien(arret2, heure, minHeureAllez(arret2, heure)); //minHeureAllez() pour trouver le bon horaire de l'arret suivant.
+			listeLiens.add(l);
+		}
+	}
+	
+	public void addLienRetour(Arret arret2) { //cree les arcs correspondants au trajet au retour
+		for (Double heure : listeHoraireRetour) {
+			Lien l = new Lien(arret2, heure, minHeureRetour(arret2, heure)); //minHeureRetour() pour trouver le bon horaire de l'arret suivant.
+			listeLiens.add(l);
+		}
+	}
+	
+	public void addLiens(ArrayList<Lien> liste) { //sert a rassembler les listes de Liens des deux fichiers .txt differents
+		for (Lien l : liste) {
+			listeLiens.add(l);
+		}
+	}
+	
+	public Double conversion(String heure) { // Convertis les strings heure en double minute. ex : "7:10" -> 7*60 + 10 = 430
+		if (heure.length() == 4) {
+			int a = Character.getNumericValue(heure.charAt(0));;
+			int b = Character.getNumericValue(heure.charAt(2));;
+			int c = Character.getNumericValue(heure.charAt(3));;
+			return((double)(a)*(double)(60)+(double)(b)*(double)(10) +(double)(c));
+		}
+		else {
+			int a = Character.getNumericValue(heure.charAt(0));;
+			int b = Character.getNumericValue(heure.charAt(1));;
+			int c = Character.getNumericValue(heure.charAt(3));;
+			int d = Character.getNumericValue(heure.charAt(4));;
+			return((double)(a)*(double)600 +(double)(b)*(double)(60)+(double)(c)*(double)(10) +(double)(d));
+		}
+	}
+	
+	
+	public Time allerA(Arret arrivee, Double timeCode, ArrayList<String> listePassage) { //Fonction recursive de parcours du graphe.
+		ArrayList<String> newListePassage = new ArrayList<String>(); //liste qui contient tous les arrets deja passes (evite de boucler)
+		newListePassage.addAll(listePassage);
+		if (nom.equals(arrivee.getNom())) { // si on est arrive (nom de l'arret actuel = nom de l'arret recherche) :
+			ArrayList<String> cheminArrets = new ArrayList<String>();
+			ArrayList<Double> listeDepart = new ArrayList<Double>();
+			ArrayList<Double> listeArrivee = new ArrayList<Double>();
+			cheminArrets.add(nom); //on ajoute l'arret au chemin parcouru. Comme c'est recursif, les arrets vont s'ajouter un par un quand le programme va return en boucle jusqu'a l'origine.
+			Time tempsEtParcours = new Time(timeCode, cheminArrets, listeDepart, listeArrivee); //Toutes les donnees (temps d'arrivee qu'on devra comparer aux autre, chemin, historique des departs/arrivee de chaque arret) sont stocke dans cette variable.
+			return tempsEtParcours; //recursivite
+		}
+		else {
+			ArrayList<Time> trajets = new ArrayList<Time>();
+			ArrayList<Double> choixDeparts = new ArrayList<Double>();
+			ArrayList<Double> choixArrivees = new ArrayList<Double>();
+			for (Lien l : listeLiens) { //Si on est pas arrive on fait la recursivite sur les arcs disponibles.
+				if(l.getDepart() >= timeCode && newListePassage.contains(l.getArretSuivant().getNom()) == false) { //A condition que le depart se fasse apres l'heure actuelle, et qu'on ai pas deja teste ce chemin (verifiable grace a la listePassage).
+					newListePassage.add(l.getArretSuivant().getNom());
+					trajets.add(l.getArretSuivant().allerA(arrivee, l.getArrivee(), newListePassage)); //on recupere la liste des recursivite de tous les arcs interessants (respectants la condition ci-dessus).
+					choixDeparts.add(l.getDepart());
+					choixArrivees.add(l.getArrivee());
+				}
+			}
+			if (trajets.isEmpty()) { //Si il n'y a pas de trajet disponible on renvoie une valeur aberante pour qu'elle ne soit pas choisie lors de la recursivite.
+				ArrayList<String> cheminArrets = new ArrayList<String>();
+				ArrayList<Double> listeDepart = new ArrayList<Double>();
+				ArrayList<Double> listeArrivee = new ArrayList<Double>();
+				cheminArrets.add(nom);
+				Time tempsEtParcours = new Time(99999.0, cheminArrets, listeDepart, listeArrivee);
+				return tempsEtParcours;
+			}
+			int indice = 0;
+			double actuelleHeure = trajets.get(0).getHeure(); 
+			for(int i = 0; i < trajets.size(); i++) { //On recupere le meilleur temps de la liste des recursivité.
+				if (trajets.get(i).getHeure() < actuelleHeure) indice = i;
+			}
+			//On prend le chemin recursif qui nous interesse, le concatene avec l'arret actuel, et renvoie le tout a la recursivite precedente.
+			ArrayList<String> cheminArrets = new ArrayList<String>();
+			ArrayList<Double> listeDepart = new ArrayList<Double>();
+			ArrayList<Double> listeArrivee = new ArrayList<Double>();
+			cheminArrets.add(nom);
+			cheminArrets.addAll(trajets.get(indice).getSuiteArrets());
+			listeDepart.add(choixDeparts.get(indice));
+			listeDepart.addAll(trajets.get(indice).getHeuresDeparts());
+			listeArrivee.add(choixArrivees.get(indice));
+			listeArrivee.addAll(trajets.get(indice).getHeuresArrivees());
+			Time tempsEtParcours = new Time(trajets.get(indice).getHeure(), cheminArrets, listeDepart, listeArrivee);
+			return tempsEtParcours;
+
+		}
+	}
+}
