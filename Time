@@ -1,0 +1,40 @@
+import java.util.ArrayList;
+
+public class Time { //utilise pour la fonction recursive allerA de la classe Arret.
+	//Le probleme de cette fonction est que si on fait une recursivite normal, on garde le temps final, mais pas les passage intermediaires.
+	//On cree donc cette classe pour pouvoir faire la recursivite sur le temps, tout en gardant en memoire le chemin parcouru.
+	
+	private double heure;
+	private ArrayList<Double> heuresDeparts; //garde en memoire les horaire de depart des arcs parcours
+	private ArrayList<Double> heuresArrivees; //garde en memoire les horaire de fin des arcs parcours
+	private ArrayList<String> suiteArrets = new ArrayList<String>(); //garde en memoire les arrets parcourus.
+	
+	public Time(double uneHeure, ArrayList<String> uneSuiteArrets, ArrayList<Double> desHeuresDeparts, ArrayList<Double> desHeuresArrivees) {
+		heure = uneHeure;
+		suiteArrets = uneSuiteArrets;
+		heuresDeparts = desHeuresDeparts;
+		heuresArrivees = desHeuresArrivees;
+		
+	}
+	public double getHeure() {
+		return heure;
+	}
+	public ArrayList<String> getSuiteArrets(){
+		return suiteArrets;
+	}
+	public ArrayList<Double> getHeuresDeparts(){
+		return heuresDeparts;
+	}
+	public ArrayList<Double> getHeuresArrivees(){
+		return heuresArrivees;
+	}
+	public void addHeureDepart(double heure) {
+		heuresDeparts.add(heure);
+	}
+	public void addHeureArrivee(double heure) {
+		heuresArrivees.add(heure);
+	}
+	public void addArret(String arret) {
+		suiteArrets.add(arret);
+	}
+}
