@@ -1,0 +1,95 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+
+public class LireFichierTexte{ //Cette classe sert a lire les .txt et a recuperer les horaires, arrets, liens entre les arrets.
+	private static String AdresseFichier;   //Adresse du fichier .txt
+	
+	public LireFichierTexte(String uneAdresseFichier){
+		AdresseFichier = uneAdresseFichier;
+	}
+	
+	public ArrayList<Arret> recupererArrets() { //Recupere toutes les informations du fichier texte (arrets, horaires, liens entre les arrets)
+		File file = new File(AdresseFichier);   //Permet de lire le fichier
+		FileReader fr;   //Permet de lire le fichier
+		ArrayList<Arret> listeArrets = new ArrayList<Arret>();   //Liste des differents arrets. Type Arret.
+		boolean finished = false; //condition pour sortir de la boucle. On a fini de recuperer le nom des arrets (mais pas leurs horaires).
+		
+		try {
+			fr = new FileReader(file);
+			int i = 0;
+			Arret nouvelArret = new Arret(""); //recupere le nom de l'arret qu'on est en train de lire. Se remet a "" a chaque changement d'arret (a chaque espace).
+			
+			//PARTIE POUR RECUPERER LES ARRETS
+			while (!finished){
+				i = fr.read(); //i = code ascii du caractere lu.
+				if (i == 10) {  //i = 10 (retour ligne) => on a fini de recuperer le nom des arrets et passe a la partie recuperation des horaires (voir //PARTIE... ci-dessous).
+					finished = true;
+				}
+				if ((i == 32) || (i == 10)) {  //i=32 (espace) => on change de mot
+					if (nouvelArret.getNom().length() != 1) {  // on elimine les arrets de 1 caractere, c'est à dire les "N" et les "+" servant à delimiter.
+						listeArrets.add(nouvelArret); //Si il s'agit d'un vrai arret on l'ajoute à la liste.
+					}
+					nouvelArret = new Arret(""); //On reinitialise le nom de l'arret
+				}
+				else {
+					nouvelArret.addAscii(i);  //On ajoute la lettre correspondant au code ascii i au nom de l'arret
+				}
+			}
+			
+			//PARTIE POUR CREER LES HORAIRES A LALLEZ (on utilise deux listes differentes pour l'allez et le retour)
+			int numeroArret = -1; //indice de l'arret traite. On commence a -1 car le premier retour ligne va faire passer la valeur a 0
+			String horaire = ""; //Suivant le meme principe, on va recuperer les horaire et reinitialiser la chaine de caracteres a chaque espace.
+			while (numeroArret < listeArrets.size()){ //Il y a une ligne par arret. Si on a precedement compte 10 arrets, au bout de 10 lignes on a fini de recuperer les horaires de l'allez. On passe donc au retour.
+				i = fr.read(); //lecture code ascii.
+				if (i == 10) {  // 10 = espace
+					if (horaire != "") { //Si l'horaire est sous le bon format (il s'agit donc bien d'un horaire), on le converti en minute (7h30 = 7*60 +30 minutes) et l'ajoute à la liste des horaires.
+						listeArrets.get(numeroArret).addHoraireAllez(listeArrets.get(numeroArret).conversion(horaire)); //On voit ici l'appel a la fonction conversion().
+						horaire = ""; //on reinitialise l'horaire.
+					}
+					numeroArret += 1; //au retour ligne on change d'arret
+				}
+				if (i == 32 && horaire != "") {  //quand on a un horaire valide et quon a un espace, on l'ajoute a la liste puis on reinitialise la variable pour recuperer un prochain horaire
+					listeArrets.get(numeroArret).addHoraireAllez(listeArrets.get(numeroArret).conversion(horaire)); //On oublie pas de convertir "hh:xx" -> minutes
+					horaire = ""; //pret a recuperer un nouvel horaire.
+				}
+				if (i > 47 && i < 59) {  //tous les chiffres ou le signe ':' car on le rapelle, les horaire sont de la forme hh:mm
+					horaire += (char)i; //on recupere au fur et a mesure la chaine de caractere qui forme un horaire ("hh:mm").
+				}
+			}
+			//PARTIE POUR CREER LES HORAIRES AU RETOUR
+			//exactement pareil qu'a l'allez.
+			numeroArret = -1;
+			horaire = "";
+			while (numeroArret < listeArrets.size()){
+				i = fr.read();
+				if (i == 10) {
+					if (horaire != "") {
+						listeArrets.get(listeArrets.size() -numeroArret -1).addHoraireRetour(listeArrets.get(listeArrets.size() -numeroArret -1).conversion(horaire));
+						horaire = "";
+					}
+					numeroArret += 1;
+				}
+				if (i == 32 && horaire != "") {
+					listeArrets.get(listeArrets.size() -numeroArret -1).addHoraireRetour(listeArrets.get(listeArrets.size() -numeroArret -1).conversion(horaire));
+					horaire = "";
+				}
+				if (i > 47 && i < 59) {  //tous les chiffres ou ':'
+					horaire += (char)i;
+				}
+			}
+		
+		}
+		
+		//GESTION DES ERREURS.
+		catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		return listeArrets;
+	}
+}
